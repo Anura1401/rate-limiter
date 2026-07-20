@@ -1,5 +1,5 @@
 const express = require('express');
-const fixedWindowLimiter = require('./rate-limiter/limiter');
+const fixedWindowLimiter = require('./src/middleware/limiter');
 const app = express();
 
 app.use(fixedWindowLimiter(5, 60000));
