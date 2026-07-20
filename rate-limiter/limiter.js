@@ -1,21 +1,19 @@
-const requestCounts = {}; // { ip: { count, resetTime } }
+const Redis = require('ioredis');
+const redis = new Redis(); // connects to localhost:6379 by default
 
-function fixedWindowLimiter(limit, windowMs) {
-  return (req, res, next) => {
-    const key = req.ip;
-    const now = Date.now();
+function fixedWindowLimiter(limit, windowSeconds) {
+  return async (req, res, next) => {
+    const key = `rate:${req.ip}`;
+    const count = await redis.incr(key);
 
-    if (!requestCounts[key] || now > requestCounts[key].resetTime) {
-      requestCounts[key] = { count: 1, resetTime: now + windowMs };
-      return next();
+    if (count === 1) {
+      await redis.expire(key, windowSeconds);
     }
 
-    if (requestCounts[key].count < limit) {
-      requestCounts[key].count++;
-      return next();
+    if (count > limit) {
+      return res.status(429).json({ error: 'Too many requests' });
     }
-
-    res.status(429).json({ error: 'Too many requests' });
+    next();
   };
 }
 
