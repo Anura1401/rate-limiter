@@ -1,11 +1,15 @@
 const express = require('express');
 const fixedWindowLimiter = require('./src/middleware/limiter');
+const tokenBucketLimiter = require('./src/middleware/tokenBucketLimiter');
 const app = express();
 
-app.use(fixedWindowLimiter(5, 60000));
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello! Request allowed.' });
+});
+
+app.get('/api/bucket-test', tokenBucketLimiter(5, 0.5), (req, res) => {
+  res.json({ message: 'Token bucket allowed this request.' });
 });
 
 const PORT = process.env.PORT || 3000;
