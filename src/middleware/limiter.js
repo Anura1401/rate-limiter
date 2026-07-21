@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const redis = new Redis();
-const script = fs.readFileSync(path.join(__dirname, '../scripts/sliding_window.lua'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '../scripts/fixed_window.lua'), 'utf8');
 
 const TIER_LIMITS = {
   'free-key-123': { limit: 5, window: 60 },
