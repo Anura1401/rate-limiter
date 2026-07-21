@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rate Limiter Dashboard</title>
+  <style>
+    body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 40px; }
+    h1 { color: #4ade80; }
+    .card { background: #2a2a2a; padding: 20px; margin: 10px 0; border-radius: 8px; }
+    .allowed { color: #4ade80; }
+    .blocked { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Rate Limiter Stats</h1>
+  <div id="stats"></div>
+
+  <script>
+    async function loadStats() {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      const container = document.getElementById('stats');
+      container.innerHTML = '';
+
+      for (const [algo, counts] of Object.entries(data)) {
+        container.innerHTML += `
+          <div class="card">
+            <h3>${algo}</h3>
+            <p class="allowed">Allowed: ${counts.allowed}</p>
+            <p class="blocked">Blocked: ${counts.blocked}</p>
+          </div>
+        `;
+      }
+    }
+
+    loadStats();
+    setInterval(loadStats, 2000); // refresh every 2 seconds
+  </script>
+</body>
+</html>

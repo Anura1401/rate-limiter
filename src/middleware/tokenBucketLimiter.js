@@ -1,7 +1,7 @@
 const Redis = require('ioredis');
 const fs = require('fs');
 const path = require('path');
-
+const {recordStat} = require('./stats');
 const redis = new Redis();
 const script = fs.readFileSync(path.join(__dirname, '../scripts/token_bucket.lua'), 'utf8');
 
@@ -21,8 +21,10 @@ function tokenBucketLimiter(defaultCapacity, defaultRefillRate) {
 
     const allowed = await redis.eval(script, 1, key, tier.capacity, tier.refillRate, now);
 
+    await recordStat('tokenBucket', allowed === 1);
+
     if (allowed === 0) {
-      return res.status(429).json({ error: 'Too many requests' });
+    return res.status(429).json({ error: 'Too many requests' });
     }
     next();
   };
