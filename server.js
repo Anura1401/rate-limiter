@@ -4,7 +4,7 @@ const tokenBucketLimiter = require('./src/middleware/tokenBucketLimiter');
 const app = express();
 
 
-app.get('/api/hello', (req, res) => {
+app.get('/api/hello', fixedWindowLimiter(5, 60), (req, res) => {
   res.json({ message: 'Hello! Request allowed.' });
 });
 
