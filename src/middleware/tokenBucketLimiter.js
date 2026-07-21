@@ -22,13 +22,16 @@ function tokenBucketLimiter(defaultCapacity, defaultRefillRate) {
 
     const tier = TIER_LIMITS[apiKey] || { capacity: defaultCapacity, refillRate: defaultRefillRate };
 
-    const allowed = await redis.eval(script, 1, key, tier.capacity, tier.refillRate, now);
+    const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, tier.capacity, tier.refillRate, now);
 
-    await recordStat('tokenBucket', allowed === 1);
+    res.set('X-RateLimit-Limit', tier.capacity);
+    res.set('X-RateLimit-Remaining', remaining);
 
     if (allowed === 0) {
-    return res.status(429).json({ error: 'Too many requests' });
+      res.set('Retry-After', retryAfter);
+      return res.status(429).json({ error: 'Too many requests' });
     }
+
     next();
   };
 }

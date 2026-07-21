@@ -1,7 +1,7 @@
 local key = KEYS[1]
-local capacity = tonumber(ARGV[1])       -- max tokens in bucket
-local refillRate = tonumber(ARGV[2])     -- tokens added per second
-local now = tonumber(ARGV[3])            -- current timestamp (seconds)
+local capacity = tonumber(ARGV[1])
+local refillRate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
 
 local bucket = redis.call("HMGET", key, "tokens", "lastRefill")
 local tokens = tonumber(bucket[1])
@@ -25,4 +25,10 @@ end
 redis.call("HMSET", key, "tokens", tokens, "lastRefill", now)
 redis.call("EXPIRE", key, 3600)
 
-return allowed
+-- retryAfter: seconds until at least 1 token is available
+local retryAfter = 0
+if allowed == 0 and refillRate > 0 then
+  retryAfter = math.ceil((1 - tokens) / refillRate)
+end
+
+return {allowed, math.floor(tokens), retryAfter}

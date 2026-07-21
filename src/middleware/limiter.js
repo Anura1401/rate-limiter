@@ -23,14 +23,18 @@ function fixedWindowLimiter(defaultLimit, defaultWindow) {
 
     const tier = TIER_LIMITS[apiKey] || { limit: defaultLimit, window: defaultWindow };
 
-    const allowed = await redis.eval(script, 1, key, tier.limit, tier.window);
+    const [allowed, remaining, ttl] = await redis.eval(script, 1, key, tier.limit, tier.window);
 
     await recordStat('fixedWindow', allowed === 1);
 
+    res.set('X-RateLimit-Limit', tier.limit);
+    res.set('X-RateLimit-Remaining', remaining);
+
     if (allowed === 0) {
-    return res.status(429).json({ error: 'Too many requests' });
+      res.set('Retry-After', ttl);
+      return res.status(429).json({ error: 'Too many requests' });
     }
-    
+
     next();
   };
 }

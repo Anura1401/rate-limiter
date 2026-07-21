@@ -8,8 +8,11 @@ if current == 1 then
   redis.call("EXPIRE", key, window)
 end
 
+local ttl = redis.call("TTL", key)
+local remaining = math.max(0, limit - current)
+
 if current > limit then
-  return 0
+  return {0, remaining, ttl}
 else
-  return 1
+  return {1, remaining, ttl}
 end

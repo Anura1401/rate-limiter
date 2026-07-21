@@ -17,13 +17,16 @@ function slidingWindowLogLimiter(limit, windowSeconds) {
     const key = `swlog:${identifier}`;
     const now = Date.now() / 1000;
 
-    const allowed = await redis.eval(script, 1, key, limit, windowSeconds, now);
+    const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, limit, windowSeconds, now);
 
-    await recordStat('slidingWindowLog', allowed === 1);
+    res.set('X-RateLimit-Limit', limit);
+    res.set('X-RateLimit-Remaining', remaining);
 
     if (allowed === 0) {
-    return res.status(429).json({ error: 'Too many requests' });
+      res.set('Retry-After', retryAfter);
+      return res.status(429).json({ error: 'Too many requests' });
     }
+
     next();
   };
 }

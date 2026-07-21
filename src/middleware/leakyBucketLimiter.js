@@ -16,13 +16,16 @@ function leakyBucketLimiter(capacity, leakRate) {
     const key = `leaky:${identifier}`;
     const now = Math.floor(Date.now() / 1000);
 
-    const allowed = await redis.eval(script, 1, key, capacity, leakRate, now);
+    const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, capacity, leakRate, now);
 
-    await recordStat('leakyBucket', allowed === 1);
+    res.set('X-RateLimit-Limit', capacity);
+    res.set('X-RateLimit-Remaining', remaining);
 
     if (allowed === 0) {
-    return res.status(429).json({ error: 'Too many requests' });
+      res.set('Retry-After', retryAfter);
+      return res.status(429).json({ error: 'Too many requests' });
     }
+
     next();
   };
 }
