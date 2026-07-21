@@ -6,7 +6,7 @@ const redis = new Redis({
 });
 const fs = require('fs');
 const path = require('path');
-const {recordStat} = require('./stats');
+const {recordStat,recordRemaining} = require('./stats');
 
 const script = fs.readFileSync(path.join(__dirname, '../scripts/sliding_window_log.lua'), 'utf8');
 
@@ -18,6 +18,8 @@ function slidingWindowLogLimiter(limit, windowSeconds) {
     const now = Date.now() / 1000;
 
     const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, limit, windowSeconds, now);
+    await recordStat('slidingWindowLog', allowed === 1);
+    await recordRemaining('slidingWindowLog', remaining, limit);
 
     res.set('X-RateLimit-Limit', limit);
     res.set('X-RateLimit-Remaining', remaining);

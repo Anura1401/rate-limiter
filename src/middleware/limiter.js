@@ -6,8 +6,7 @@ const redis = new Redis({
 });
 const fs = require('fs');
 const path = require('path');
-const { recordStat } = require('./stats');
-
+const { recordStat, recordRemaining } = require('./stats');
 const script = fs.readFileSync(path.join(__dirname, '../scripts/fixed_window.lua'), 'utf8');
 
 const TIER_LIMITS = {
@@ -26,6 +25,7 @@ function fixedWindowLimiter(defaultLimit, defaultWindow) {
     const [allowed, remaining, ttl] = await redis.eval(script, 1, key, tier.limit, tier.window);
 
     await recordStat('fixedWindow', allowed === 1);
+    await recordRemaining('fixedWindow', remaining, tier.limit);
 
     res.set('X-RateLimit-Limit', tier.limit);
     res.set('X-RateLimit-Remaining', remaining);

@@ -64,6 +64,15 @@ Tested with [k6](https://k6.io/):
 - 99.64% of requests correctly blocked once the shared limit was reached
 - Confirms accurate enforcement even under heavy contention on a single key
 
+## Response Headers
+
+Every rate-limited endpoint returns standard headers on all responses:
+- `X-RateLimit-Limit` — max requests allowed in the current window
+- `X-RateLimit-Remaining` — requests remaining before being blocked
+- `Retry-After` — seconds until retry is allowed (only present on 429 responses)
+
+This follows the same convention used by production APIs like GitHub and Stripe.
+
 ## Key Engineering Challenges & Solutions
 
 **1. Race condition in naive Redis usage**

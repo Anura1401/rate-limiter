@@ -6,7 +6,7 @@ const redis = new Redis({
 });
 const fs = require('fs');
 const path = require('path');
-const {recordStat} = require('./stats')
+const {recordStat,recordRemaining} = require('./stats')
 const script = fs.readFileSync(path.join(__dirname, '../scripts/leaky_bucket.lua'), 'utf8');
 
 function leakyBucketLimiter(capacity, leakRate) {
@@ -17,6 +17,8 @@ function leakyBucketLimiter(capacity, leakRate) {
     const now = Math.floor(Date.now() / 1000);
 
     const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, capacity, leakRate, now);
+    await recordStat('leakyBucket', allowed === 1);
+    await recordRemaining('leakyBucket', remaining, capacity);
 
     res.set('X-RateLimit-Limit', capacity);
     res.set('X-RateLimit-Remaining', remaining);

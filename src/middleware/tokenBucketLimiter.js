@@ -1,7 +1,7 @@
 const Redis = require('ioredis');
 const fs = require('fs');
 const path = require('path');
-const {recordStat} = require('./stats');
+const {recordStat,recordRemaining} = require('./stats');
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: 6379,
@@ -23,6 +23,8 @@ function tokenBucketLimiter(defaultCapacity, defaultRefillRate) {
     const tier = TIER_LIMITS[apiKey] || { capacity: defaultCapacity, refillRate: defaultRefillRate };
 
     const [allowed, remaining, retryAfter] = await redis.eval(script, 1, key, tier.capacity, tier.refillRate, now);
+    await recordStat('tokenBucket', allowed === 1);
+    await recordRemaining('tokenBucket', remaining, tier.limit);
 
     res.set('X-RateLimit-Limit', tier.capacity);
     res.set('X-RateLimit-Remaining', remaining);

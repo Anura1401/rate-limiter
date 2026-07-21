@@ -22,14 +22,19 @@
       container.innerHTML = '';
 
       for (const [algo, counts] of Object.entries(data)) {
-        container.innerHTML += `
-          <div class="card">
-            <h3>${algo}</h3>
-            <p class="allowed">Allowed: ${counts.allowed}</p>
-            <p class="blocked">Blocked: ${counts.blocked}</p>
-          </div>
-        `;
-      }
+  const remainingDisplay = counts.remaining !== null
+    ? `${counts.remaining} / ${counts.limit}`
+    : 'N/A';
+
+  container.innerHTML += `
+    <div class="card">
+      <h3>${algo}</h3>
+      <p class="allowed">Allowed: ${counts.allowed}</p>
+      <p class="blocked">Blocked: ${counts.blocked}</p>
+      <p>Remaining (last request): ${remainingDisplay}</p>
+    </div>
+  `;
+}
     }
 
     loadStats();
