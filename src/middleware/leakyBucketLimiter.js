@@ -1,8 +1,12 @@
 const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: 6379,
+});
 const fs = require('fs');
 const path = require('path');
 const {recordStat} = require('./stats')
-const redis = new Redis();
 const script = fs.readFileSync(path.join(__dirname, '../scripts/leaky_bucket.lua'), 'utf8');
 
 function leakyBucketLimiter(capacity, leakRate) {

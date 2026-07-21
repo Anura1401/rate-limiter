@@ -1,6 +1,8 @@
 const Redis = require('ioredis');
-const redis = new Redis();
-
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: 6379,
+});
 async function recordStat(algorithm, allowed) {
   const field = allowed ? 'allowed' : 'blocked';
   await redis.hincrby(`stats:${algorithm}`, field, 1);
